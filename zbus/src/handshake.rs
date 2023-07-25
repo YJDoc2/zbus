@@ -35,6 +35,8 @@ pub enum AuthMechanism {
     /// over the `unix:` transport.
     External,
 
+    ExternalUid(i32),
+
     /// This mechanism is designed to establish that a client has the ability to read a private
     /// file owned by the user being authenticated.
     Cookie,
@@ -188,6 +190,10 @@ impl<S: Socket> ClientHandshake<S> {
             AuthMechanism::External => Ok((
                 WaitingForOK,
                 Command::Auth(Some(*mech), Some(sasl_auth_id()?.into_bytes())),
+            )),
+            AuthMechanism::ExternalUid(uid) => Ok((
+                WaitingForOK,
+                Command::Auth(Some(*mech), Some(uid.to_string().into_bytes())),
             )),
             AuthMechanism::Cookie => Ok((
                 WaitingForData,
@@ -796,6 +802,7 @@ impl fmt::Display for AuthMechanism {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mech = match self {
             AuthMechanism::External => "EXTERNAL",
+            AuthMechanism::ExternalUid(_) => "EXTERNAL",
             AuthMechanism::Cookie => "DBUS_COOKIE_SHA1",
             AuthMechanism::Anonymous => "ANONYMOUS",
         };
